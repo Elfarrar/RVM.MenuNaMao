@@ -1,0 +1,23 @@
+services:
+  rvmmenunamao-api:
+    build:
+      context: .
+      dockerfile: src/RVM.MenuNaMao.API/Dockerfile
+    container_name: rvmmenunamao-api
+    restart: unless-stopped
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://+:8080
+      - ConnectionStrings__DefaultConnection=Host=rvmtech-db;Database=rvmmenunamao;Username=rvmtech;Password=${POSTGRES_PASSWORD}
+      - DataProtection__Directory=/app/data/dataprotection
+    volumes:
+      - app-data:/app/data
+    networks:
+      - rvmtech
+
+volumes:
+  app-data:
+
+networks:
+  rvmtech:
+    external: true
