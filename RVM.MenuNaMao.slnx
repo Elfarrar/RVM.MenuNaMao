@@ -1,0 +1,11 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/RVM.MenuNaMao.Domain/RVM.MenuNaMao.Domain.csproj" />
+    <Project Path="src/RVM.MenuNaMao.Application/RVM.MenuNaMao.Application.csproj" />
+    <Project Path="src/RVM.MenuNaMao.Infrastructure/RVM.MenuNaMao.Infrastructure.csproj" />
+    <Project Path="src/RVM.MenuNaMao.API/RVM.MenuNaMao.API.csproj" />
+  </Folder>
+  <Folder Name="/test/">
+    <Project Path="test/RVM.MenuNaMao.Tests/RVM.MenuNaMao.Tests.csproj" />
+  </Folder>
+</Solution>

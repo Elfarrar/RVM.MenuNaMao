@@ -1,0 +1,97 @@
+@page "/admin/orders"
+@using RVM.MenuNaMao.Application.DTOs
+@using RVM.MenuNaMao.Application.Commands
+@using RVM.MenuNaMao.Application.Mediator
+@using RVM.MenuNaMao.Application.Queries
+@using RVM.MenuNaMao.Domain.Enums
+@using RVM.MenuNaMao.Domain.Interfaces
+@inject IMediator Mediator
+@inject IRestaurantRepository RestaurantRepo
+
+<h1>Pedidos</h1>
+
+<div class="filter-bar">
+    <select @bind="_statusFilter">
+        <option value="">Todos</option>
+        @foreach (var s in Enum.GetValues<OrderStatus>())
+        {
+            <option value="@s">@s</option>
+        }
+    </select>
+    <button class="btn-secondary" @onclick="LoadOrders">Filtrar</button>
+</div>
+
+@if (_orders is null)
+{
+    <p class="loading">Carregando...</p>
+}
+else if (_orders.Count == 0)
+{
+    <p class="text-muted">Nenhum pedido encontrado.</p>
+}
+else
+{
+    <table class="data-table">
+        <thead>
+            <tr><th>Mesa</th><th>Cliente</th><th>Total</th><th>Status</th><th>Criado</th><th>Ações</th></tr>
+        </thead>
+        <tbody>
+            @foreach (var order in _orders)
+            {
+                <tr>
+                    <td>@order.TableNumber</td>
+                    <td>@(order.CustomerName ?? "—")</td>
+                    <td>R$ @order.TotalAmount.ToString("N2")</td>
+                    <td><span class="badge badge-@order.Status.ToString().ToLower()">@order.Status</span></td>
+                    <td>@order.CreatedAt.ToString("HH:mm")</td>
+                    <td class="actions">
+                        @if (order.Status == OrderStatus.Pending)
+                        {
+                            <button class="btn-sm" @onclick="() => UpdateStatus(order.Id, OrderStatus.Preparing)">Preparar</button>
+                        }
+                        @if (order.Status == OrderStatus.Preparing)
+                        {
+                            <button class="btn-sm" @onclick="() => UpdateStatus(order.Id, OrderStatus.Ready)">Pronto</button>
+                        }
+                        @if (order.Status == OrderStatus.Ready)
+                        {
+                            <button class="btn-sm" @onclick="() => UpdateStatus(order.Id, OrderStatus.Delivered)">Entregue</button>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<OrderDto>? _orders;
+    private string _statusFilter = "";
+    private Guid _restaurantId;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var restaurants = await RestaurantRepo.GetAllAsync();
+        if (restaurants.Count > 0)
+        {
+            _restaurantId = restaurants[0].Id;
+            await LoadOrders();
+        }
+        else
+        {
+            _orders = [];
+        }
+    }
+
+    private async Task LoadOrders()
+    {
+        OrderStatus? status = Enum.TryParse<OrderStatus>(_statusFilter, out var s) ? s : null;
+        _orders = await Mediator.Send(new GetRestaurantOrdersQuery(_restaurantId, status));
+    }
+
+    private async Task UpdateStatus(Guid orderId, OrderStatus newStatus)
+    {
+        await Mediator.Send(new UpdateOrderStatusCommand(orderId, newStatus));
+        await LoadOrders();
+    }
+}

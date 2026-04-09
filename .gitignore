@@ -1,0 +1,31 @@
+## .NET
+bin/
+obj/
+*.user
+*.suo
+*.cache
+*.dll
+*.exe
+*.pdb
+*.log
+.vs/
+*.DotSettings.user
+TestResults/
+publish/
+
+## Node
+node_modules/
+dist/
+.env
+.env.local
+*.tgz
+
+## IDE
+.idea/
+.vscode/
+*.swp
+*~
+
+## OS
+Thumbs.db
+.DS_Store

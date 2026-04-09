@@ -1,0 +1,73 @@
+@page "/admin/tables"
+@using RVM.MenuNaMao.Application.Commands
+@using RVM.MenuNaMao.Application.DTOs
+@using RVM.MenuNaMao.Application.Mediator
+@using RVM.MenuNaMao.Application.Queries
+@using RVM.MenuNaMao.Domain.Interfaces
+@inject IMediator Mediator
+@inject IRestaurantRepository RestaurantRepo
+@inject NavigationManager Nav
+
+<h1>Mesas</h1>
+
+@if (_tables is null)
+{
+    <p class="loading">Carregando...</p>
+}
+else
+{
+    <div class="section">
+        <div class="inline-form">
+            <input @bind="_newTableNumber" type="number" placeholder="Número da mesa" />
+            <button class="btn-primary-sm" @onclick="AddTable">+ Mesa</button>
+        </div>
+    </div>
+
+    <table class="data-table">
+        <thead><tr><th>Número</th><th>Status</th><th>Token</th><th>QR Code</th></tr></thead>
+        <tbody>
+            @foreach (var table in _tables)
+            {
+                <tr>
+                    <td>@table.Number</td>
+                    <td><span class="badge badge-@table.Status.ToString().ToLower()">@table.Status</span></td>
+                    <td><code>@table.QrCodeToken[..8]...</code></td>
+                    <td><a href="api/admin/restaurants/@_restaurantId/tables/@table.Id/qrcode" target="_blank" class="btn-sm">Download</a></td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<TableDto>? _tables;
+    private Guid _restaurantId;
+    private int _newTableNumber;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var restaurants = await RestaurantRepo.GetAllAsync();
+        if (restaurants.Count > 0)
+        {
+            _restaurantId = restaurants[0].Id;
+            await LoadTables();
+        }
+        else
+        {
+            _tables = [];
+        }
+    }
+
+    private async Task LoadTables()
+    {
+        _tables = await Mediator.Send(new GetTablesQuery(_restaurantId));
+    }
+
+    private async Task AddTable()
+    {
+        if (_newTableNumber <= 0) return;
+        await Mediator.Send(new CreateTableCommand(_restaurantId, _newTableNumber));
+        _newTableNumber = 0;
+        await LoadTables();
+    }
+}

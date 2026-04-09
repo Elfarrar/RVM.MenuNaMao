@@ -1,0 +1,107 @@
+@page "/admin/stock"
+@using RVM.MenuNaMao.Application.Commands
+@using RVM.MenuNaMao.Application.DTOs
+@using RVM.MenuNaMao.Application.Mediator
+@using RVM.MenuNaMao.Application.Queries
+@using RVM.MenuNaMao.Domain.Entities
+@using RVM.MenuNaMao.Domain.Enums
+@using RVM.MenuNaMao.Domain.Interfaces
+@inject IMediator Mediator
+@inject IRestaurantRepository RestaurantRepo
+@inject IStockItemRepository StockRepo
+
+<h1>Estoque</h1>
+
+@if (_items is null)
+{
+    <p class="loading">Carregando...</p>
+}
+else
+{
+    <div class="section">
+        <h2>Novo Item</h2>
+        <div class="inline-form">
+            <input @bind="_newName" placeholder="Nome" />
+            <select @bind="_newUnit">
+                @foreach (var u in Enum.GetValues<StockUnit>())
+                {
+                    <option value="@u">@u</option>
+                }
+            </select>
+            <input @bind="_newQty" type="number" step="0.01" placeholder="Qtd" style="width:80px" />
+            <input @bind="_newMin" type="number" step="0.01" placeholder="Mín" style="width:80px" />
+            <button class="btn-primary-sm" @onclick="AddItem">Adicionar</button>
+        </div>
+    </div>
+
+    <table class="data-table">
+        <thead><tr><th>Item</th><th>Unid</th><th>Qtd</th><th>Mín</th><th>Ação</th></tr></thead>
+        <tbody>
+            @foreach (var item in _items)
+            {
+                <tr class="@(item.Quantity <= item.MinQuantity ? "row-danger" : "")">
+                    <td>@item.Name</td>
+                    <td>@item.Unit</td>
+                    <td>@item.Quantity</td>
+                    <td>@item.MinQuantity</td>
+                    <td>
+                        <button class="btn-sm" @onclick="() => AddMovement(item.Id, StockMovementType.In)">+ Entrada</button>
+                        <button class="btn-sm" @onclick="() => AddMovement(item.Id, StockMovementType.Out)">- Saída</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<StockItemDto>? _items;
+    private Guid _restaurantId;
+    private string _newName = "";
+    private StockUnit _newUnit = StockUnit.Un;
+    private decimal _newQty;
+    private decimal _newMin;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var restaurants = await RestaurantRepo.GetAllAsync();
+        if (restaurants.Count > 0)
+        {
+            _restaurantId = restaurants[0].Id;
+            await LoadStock();
+        }
+        else
+        {
+            _items = [];
+        }
+    }
+
+    private async Task LoadStock()
+    {
+        _items = await Mediator.Send(new GetStockItemsQuery(_restaurantId));
+    }
+
+    private async Task AddItem()
+    {
+        if (string.IsNullOrWhiteSpace(_newName)) return;
+        var item = new StockItem
+        {
+            RestaurantId = _restaurantId,
+            Name = _newName,
+            Unit = _newUnit,
+            Quantity = _newQty,
+            MinQuantity = _newMin
+        };
+        await StockRepo.AddAsync(item);
+        _newName = "";
+        _newQty = 0;
+        _newMin = 0;
+        await LoadStock();
+    }
+
+    private async Task AddMovement(Guid stockItemId, StockMovementType type)
+    {
+        await Mediator.Send(new AddStockMovementCommand(stockItemId, type, 1, "Manual"));
+        await LoadStock();
+    }
+}

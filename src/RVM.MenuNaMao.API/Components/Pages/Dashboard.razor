@@ -1,0 +1,74 @@
+@page "/admin"
+@using RVM.MenuNaMao.Application.DTOs
+@using RVM.MenuNaMao.Application.Mediator
+@using RVM.MenuNaMao.Application.Queries
+@using RVM.MenuNaMao.Domain.Interfaces
+@inject IMediator Mediator
+@inject IRestaurantRepository RestaurantRepo
+
+<h1>Dashboard</h1>
+
+@if (_dashboard is null)
+{
+    <p class="loading">Carregando...</p>
+}
+else
+{
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-value">@_dashboard.PendingOrders</div>
+            <div class="stat-label">Pendentes</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">@_dashboard.PreparingOrders</div>
+            <div class="stat-label">Preparando</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">@_dashboard.TodayOrders</div>
+            <div class="stat-label">Pedidos Hoje</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">R$ @_dashboard.TodayRevenue.ToString("N2")</div>
+            <div class="stat-label">Receita Hoje</div>
+        </div>
+    </div>
+
+    @if (_dashboard.StockAlerts.Count > 0)
+    {
+        <div class="section">
+            <h2>Alertas de Estoque</h2>
+            <table class="data-table">
+                <thead>
+                    <tr><th>Item</th><th>Qtd Atual</th><th>Qtd Mínima</th></tr>
+                </thead>
+                <tbody>
+                    @foreach (var alert in _dashboard.StockAlerts)
+                    {
+                        <tr class="row-danger">
+                            <td>@alert.Name</td>
+                            <td>@alert.Quantity</td>
+                            <td>@alert.MinQuantity</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+}
+
+@code {
+    private DashboardDto? _dashboard;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var restaurants = await RestaurantRepo.GetAllAsync();
+        if (restaurants.Count > 0)
+        {
+            _dashboard = await Mediator.Send(new GetDashboardQuery(restaurants[0].Id));
+        }
+        else
+        {
+            _dashboard = new DashboardDto(0, 0, 0, 0, []);
+        }
+    }
+}
