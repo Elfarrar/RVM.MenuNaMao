@@ -29,6 +29,12 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<RVM.MenuNaMao.Infrastructure.Data.MenuNaMaoDbContext>();
+    await db.Database.EnsureCreatedAsync();
+}
+
 app.UseMiddleware<CorrelationIdMiddleware>();
 app.UseMiddleware<GlobalExceptionMiddleware>();
 
