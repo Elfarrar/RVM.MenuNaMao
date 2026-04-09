@@ -1,3 +1,5 @@
+*[English](README.en.md) | **Português***
+
 # RVM.MenuNaMao
 
 Sistema completo de cardapio digital e gestao de restaurante com QR Code, painel administrativo Blazor Server e menu eletronico React.
