@@ -1,3 +1,4 @@
+using Microsoft.Extensions.FileProviders;
 using RVM.MenuNaMao.API.Middleware;
 using RVM.MenuNaMao.Application;
 using RVM.MenuNaMao.Infrastructure;
@@ -22,7 +23,7 @@ builder.Services.AddHealthChecks();
 builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
-        policy.WithOrigins("http://localhost:5173")
+        policy.SetIsOriginAllowed(_ => true)
               .AllowAnyHeader()
               .AllowAnyMethod());
 });
@@ -41,10 +42,49 @@ app.UseMiddleware<GlobalExceptionMiddleware>();
 app.UseCors();
 
 app.UseStaticFiles();
+
+// Serve React client app (customer menu)
+var clientAppPath = Path.Combine(app.Environment.ContentRootPath, "clientapp");
+if (Directory.Exists(clientAppPath))
+{
+    app.UseStaticFiles(new StaticFileOptions
+    {
+        FileProvider = new PhysicalFileProvider(clientAppPath),
+        RequestPath = ""
+    });
+}
+
 app.UseAntiforgery();
 
 app.MapControllers();
 app.MapHealthChecks("/health");
+
+// SPA fallback for customer-facing React routes
+if (Directory.Exists(clientAppPath))
+{
+    var indexPath = Path.Combine(clientAppPath, "index.html");
+    app.MapGet("/menu/{**slug}", async context =>
+    {
+        context.Response.ContentType = "text/html";
+        await context.Response.SendFileAsync(indexPath);
+    });
+    app.MapGet("/cart", async context =>
+    {
+        context.Response.ContentType = "text/html";
+        await context.Response.SendFileAsync(indexPath);
+    });
+    app.MapGet("/checkout", async context =>
+    {
+        context.Response.ContentType = "text/html";
+        await context.Response.SendFileAsync(indexPath);
+    });
+    app.MapGet("/order/{**slug}", async context =>
+    {
+        context.Response.ContentType = "text/html";
+        await context.Response.SendFileAsync(indexPath);
+    });
+}
+
 app.MapRazorComponents<RVM.MenuNaMao.API.Components.App>()
     .AddInteractiveServerRenderMode();
 

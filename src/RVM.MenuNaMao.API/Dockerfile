@@ -1,3 +1,10 @@
+FROM node:20-alpine AS frontend
+WORKDIR /app
+COPY src/menunomao-menu/package*.json ./
+RUN npm ci
+COPY src/menunomao-menu/ ./
+RUN npm run build
+
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS base
 USER $APP_UID
 WORKDIR /app
@@ -23,4 +30,5 @@ RUN dotnet publish "./RVM.MenuNaMao.API.csproj" -c $BUILD_CONFIGURATION -o /app/
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
+COPY --from=frontend /app/dist ./clientapp
 ENTRYPOINT ["dotnet", "RVM.MenuNaMao.API.dll"]
