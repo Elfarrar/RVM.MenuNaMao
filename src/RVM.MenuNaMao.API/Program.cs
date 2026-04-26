@@ -1,4 +1,5 @@
 using Microsoft.Extensions.FileProviders;
+using RVM.Common.Security;
 using RVM.MenuNaMao.API.Middleware;
 using RVM.MenuNaMao.Application;
 using RVM.MenuNaMao.Infrastructure;
@@ -49,6 +50,9 @@ using (var scope = app.Services.CreateScope())
 
 app.UseMiddleware<CorrelationIdMiddleware>();
 app.UseMiddleware<GlobalExceptionMiddleware>();
+
+if (!app.Environment.IsDevelopment()) { app.UseHsts(); }
+app.UseSecurityHeaders();
 
 app.UseCors();
 
