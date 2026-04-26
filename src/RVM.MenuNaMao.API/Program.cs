@@ -1,4 +1,5 @@
 using Microsoft.Extensions.FileProviders;
+using RVM.Common.Security;
 using RVM.MenuNaMao.API.Middleware;
 using RVM.MenuNaMao.Application;
 using RVM.MenuNaMao.Infrastructure;
@@ -50,28 +51,8 @@ using (var scope = app.Services.CreateScope())
 app.UseMiddleware<CorrelationIdMiddleware>();
 app.UseMiddleware<GlobalExceptionMiddleware>();
 
-if (!app.Environment.IsDevelopment())
-{
-    app.UseHsts();
-}
-
-app.Use(async (context, next) =>
-{
-    var headers = context.Response.Headers;
-    headers["X-Content-Type-Options"] = "nosniff";
-    headers["X-Frame-Options"] = "DENY";
-    headers["Referrer-Policy"] = "strict-origin-when-cross-origin";
-    headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()";
-    headers["Content-Security-Policy"] =
-        "default-src 'self'; " +
-        "script-src 'self' 'unsafe-inline'; " +
-        "style-src 'self' 'unsafe-inline'; " +
-        "font-src 'self'; " +
-        "img-src 'self' data:; " +
-        "connect-src 'self' wss:; " +
-        "frame-ancestors 'none';";
-    await next();
-});
+if (!app.Environment.IsDevelopment()) { app.UseHsts(); }
+app.UseSecurityHeaders();
 
 app.UseCors();
 
