@@ -1,7 +1,9 @@
 @inherits LayoutComponentBase
 
+<a class="skip-nav" href="#main-content">Pular para o conteúdo</a>
+
 <div class="app-layout">
-    <nav class="sidebar">
+    <nav class="sidebar" aria-label="Menu principal">
         <div class="sidebar-brand">RVM.MenuNaMao</div>
         <NavLink class="nav-link" href="admin" Match="NavLinkMatch.All">Dashboard</NavLink>
         <NavLink class="nav-link" href="admin/restaurants">Restaurantes</NavLink>
@@ -10,7 +12,7 @@
         <NavLink class="nav-link" href="admin/tables">Mesas</NavLink>
         <NavLink class="nav-link" href="admin/stock">Estoque</NavLink>
     </nav>
-    <main class="main-content">
+    <main id="main-content" class="main-content" role="main">
         @Body
     </main>
 </div>
